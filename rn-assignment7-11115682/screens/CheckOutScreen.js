@@ -1,35 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
+import { CartContext } from '../contexts/CartContext';
 
-const CheckoutScreen = ({ route, navigation }) => {
-  const { cart: initialCart } = route.params;
-  const [cart, setCart] = useState(initialCart);
-  const [total, setTotal] = useState(0);
+const CheckoutScreen = ({ navigation }) => {
+  const { cart, removeItem } = useContext(CartContext);
 
-  useEffect(() => {
-    const loadCart = async () => {
-      const storedCart = await AsyncStorage.getItem('cart');
-      if (storedCart) {
-        setCart(JSON.parse(storedCart));
-      }
-    };
-    loadCart();
-  }, []);
-
-  useEffect(() => {
-    const calculateTotal = () => {
-      const totalCost = cart.reduce((sum, item) => sum + item.price, 0);
-      setTotal(totalCost);
-    };
-    calculateTotal();
-  }, [cart]);
-
-  const removeItem = async (id) => {
-    const updatedCart = cart.filter(item => item.uniqueKey !== id);
-    setCart(updatedCart);
-    await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
+  const calculateTotal = () => {
+    return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
   };
 
   const renderItem = ({ item }) => (
@@ -38,7 +17,7 @@ const CheckoutScreen = ({ route, navigation }) => {
         <Image source={item.image} style={styles.image} />
         <View style={styles.productDetails}>
           <Text style={styles.productName}>{item.title}</Text>
-          {/* <Text style={styles.description} numberOfLines={3}>{item.description}</Text> */}
+          <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
           <Text style={styles.price}>${item.price}</Text>
         </View>
       </View>
@@ -49,24 +28,19 @@ const CheckoutScreen = ({ route, navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.subContainer}>
-        <Header navigation={navigation} cart={cart} hideSearch={true}/>
-        <Image source={require('../assets/checkout.png')} style={styles.checkOutLogo} />
-        <FlatList
-          data={cart}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.uniqueKey}
-        />
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>EST. TOTAL</Text>
-          <Text style={styles.totalAmount}>${total}</Text>
-        </View>
-      </View>
-      <TouchableOpacity style={styles.checkoutButton}>
-        <Text style={styles.checkoutButtonText}>CHECKOUT</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <Header navigation={navigation} cart={cart} />
+      <FlatList
+        data={cart}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.uniqueKey}
+        ListFooterComponent={() => (
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalText}>Total: ${calculateTotal()}</Text>
+          </View>
+        )}
+      />
+    </SafeAreaView>
   );
 };
 

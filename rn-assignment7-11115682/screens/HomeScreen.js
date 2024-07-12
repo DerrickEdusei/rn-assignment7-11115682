@@ -1,25 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import { View, Text, FlatList, Image, Pressable, StyleSheet, StatusBar, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { v4 as uuidv4 } from 'uuid';
 import { useFocusEffect } from '@react-navigation/native';
-import 'react-native-get-random-values';
 import Header from '../components/Header';
 import Icons from 'react-native-vector-icons/FontAwesome5';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CartContext } from '../contexts/CartContext';
 
 const HomeScreen = ({ navigation }) => {
-  const [cart, setCart] = useState([]);
+  const { cart, addToCart } = useContext(CartContext);
   const [products, setProducts] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
-      const loadCart = async () => {
-        const storedCart = await AsyncStorage.getItem('cart');
-        if (storedCart) {
-          setCart(JSON.parse(storedCart));
-        }
-      };
-
       const fetchProducts = async () => {
         try {
           const response = await fetch("https://fakestoreapi.com/products");
@@ -29,18 +21,9 @@ const HomeScreen = ({ navigation }) => {
           console.error(error);
         }
       };
-
-      loadCart();
       fetchProducts();
     }, [])
   );
-
-  const addToCart = async (product) => {
-    const productWithUniqueKey = { ...product, uniqueKey: uuidv4() };
-    const updatedCart = [...cart, productWithUniqueKey];
-    setCart(updatedCart);
-    await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-  };
 
   const renderItem = ({ item }) => (
     <View style={styles.productContainer}>
@@ -55,33 +38,21 @@ const HomeScreen = ({ navigation }) => {
       <Text style={styles.productName}>{item.title}</Text>
       <Text style={styles.description} numberOfLines={3}>{item.description}</Text>
       <Text style={styles.price}>${item.price}</Text>
-      
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle={"light-content"} backgroundColor='#fff' />
       <Header navigation={navigation} cart={cart} />
-      <View style={styles.subHeader}>
-        <Image source={require('../assets/our-story.png')} style={styles.logo} resizeMode="contain" />
-        <View style={styles.subHeaderIcons}>
-          <View style={styles.subHeaderIcon}>
-            <Image source={require('../assets/Listview.png')} style={styles.subIcon} resizeMode="contain" />
-          </View>
-          <View style={styles.subHeaderIcon}>
-            <Image source={require('../assets/Filter.png')} style={styles.subIcon} resizeMode="contain" />
-          </View>
-        </View>
-      </View>
       <FlatList
         data={products}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id.toString()}
         numColumns={2}
-        contentContainerStyle={styles.productList}
+        contentContainerStyle={styles.flatList}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -130,7 +101,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 235,
+    height: 200,
   },
   addButton: {
     position: 'absolute',

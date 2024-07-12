@@ -5,7 +5,7 @@ const DrawerMenu = (props) => {
   return (
     <View style={styles.container}>
       <View style={styles.categories}>
-        <Text style={styles.userText}>Edusei Derrick Akuamoah </Text>
+        <Text style={styles.userText}>Afful Nana Kwasi</Text>
         <View style={styles.underline}></View>
         <Text style={styles.category}>Store</Text>
         <Text style={styles.category}>Locations</Text>
